@@ -12,18 +12,19 @@ const urlDatabase = {
 };
 
 const generateRandomString = () => {
-  let outStr = "";
-  while (outStr.length < 6) {
+  let output = "";
+  while (output.length < 6) {
     let randCharCode = Math.floor(Math.random() * 122 + 48);
-    //number
+    //number ^^^
     if (randCharCode < 58) {
-      outStr += String.fromCharCode(randCharCode);
-    //cap and lower letters
+      output += String.fromCharCode(randCharCode);
+    //cap and lower letters ^^^
     } else if ((randCharCode >= 65 && randCharCode <= 90) || (randCharCode >= 97 && randCharCode <= 122)) {
-      outStr += String.fromCharCode(randCharCode);
+      output += String.fromCharCode(randCharCode);
     }
+    //cap and lower letters ^^^
   }
-  return outStr;
+  return output;
 };
 
 app.get("/urls", (req, res) => {
@@ -38,13 +39,18 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  console.log(req.body);
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  let shortURL = req.params.shortURL;
+  let longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/", (req, res) => {
