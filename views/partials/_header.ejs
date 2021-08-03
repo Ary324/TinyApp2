@@ -10,5 +10,20 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+    <% if(username){ %>
+      <div class="logged-in" style="padding-right: 10px; padding-left: 10px;">
+      <p style="float: left; padding-right: 10px; vertical-align: middle;">Logged in as: <b><%= username %></b></p>
+      <form style="float: right;" method="POST" action="/logout" id="user-logout">
+        <button type="submit" id="logout-button" class="btn btn-primary">Logout</button>
+      </form>
+    </div>
+    <% } else{ %>
+      <div class="user-login">
+        <form method="POST" action="/login" id="user-login">
+          <input type="text" id="username-text" name="username" placeholder="Enter username">
+          <button type="submit" id="login-button" class="btn btn-primary">Login</button>
+        </form>
+      </div>
+   <% } %>
   </nav>
 </header>
