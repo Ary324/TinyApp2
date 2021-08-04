@@ -10,9 +10,9 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if(username){ %>
+    <% if(user){ %>
       <div class="logged-in" style="padding-right: 10px; padding-left: 10px;">
-      <p style="float: left; padding-right: 10px; vertical-align: middle;">Logged in as: <b><%= username %></b></p>
+      <p style="float: left; padding-right: 10px; vertical-align: middle;">Logged in as: <b><%= user.email %></b></p>
       <form style="float: right;" method="POST" action="/logout" id="user-logout">
         <button type="submit" id="logout-button" class="btn btn-primary">Logout</button>
       </form>
@@ -20,7 +20,7 @@
     <% } else{ %>
       <div class="user-login">
         <form method="POST" action="/login" id="user-login">
-          <input type="text" id="username-text" name="username" placeholder="Enter username">
+          <input type="text" id="username-text" name="email" placeholder="Enter Email">
           <button type="submit" id="login-button" class="btn btn-primary">Login</button>
         </form>
       </div>
