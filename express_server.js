@@ -89,10 +89,17 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 
 app.post("/login", (req, res) => {
   let email = req.body.email;
+
+  if (!email || !password) {
+    res.status(400);
+    res.send("Email or/and Password cannot be blank");
+    return;
+  }
   
   let foundUser;
   for (const user_id in users) {
     const user = users[user_id];
+    
     if (email === user.email) {
       foundUser = user;
     } else {
@@ -101,7 +108,8 @@ app.post("/login", (req, res) => {
       return;
     }
   }
-  req.cookies['foundUser.id'];
+  
+  req.cookies["user_id"];
   res.redirect("/urls");
 });
 
@@ -118,6 +126,25 @@ app.post("/register", (req, res) => {
   let randId = generateRandomString();
   let email = req.body.email;
   let password = req.body.password;
+  
+  if (!email || !password) {
+    res.status(400);
+    res.send("Email or/and Password cannot be blank");
+    return;
+  }
+
+  let foundUser;
+  for (const user_id in users) {
+    const user = users[user_id];
+    if (email === user.email) {
+      foundUser = user;
+    }
+  }
+
+  if (foundUser) {
+    res.status(400);
+    res.send("Email already exists");
+  }
 
   users[randId] = {
     id: randId,
@@ -125,6 +152,7 @@ app.post("/register", (req, res) => {
     password: password,
     urls:[]
   };
+  
   res.cookie("user_id", randId);
   res.redirect("/urls");
 });
