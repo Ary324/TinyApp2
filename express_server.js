@@ -87,8 +87,13 @@ app.post("/urls/:shortURL/delete", (req,res) => {
   res.redirect("/urls");
 });
 
+app.get("/login", (req,res) => {
+  res.render("login");
+});
+
 app.post("/login", (req, res) => {
   let email = req.body.email;
+  let password = req.body.password;
 
   if (!email || !password) {
     res.status(400);
@@ -96,13 +101,10 @@ app.post("/login", (req, res) => {
     return;
   }
   
-  let foundUser;
   for (const user_id in users) {
     const user = users[user_id];
     
-    if (email === user.email) {
-      foundUser = user;
-    } else {
+    if (email !== user.email) {
       res.status(400);
       res.send("No User with that email is found");
       return;
