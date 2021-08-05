@@ -1,14 +1,19 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const { response } = require("express");
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  resave: true,
+  keys: ["supersecret"]
+}));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -45,16 +50,24 @@ const generateRandomString = () => {
 };
 
 app.get("/urls", (req, res) => {
-  let user_id = req.cookies.user_id;
+  if (!req.session.user_id) {
+    res.status(403);
+    res.send("Acces Denied, Login or Register");
+    setTimeout(res.redirect("/login"), 2000);
+  }
+  let user_id = req.session.user_id;
   const user = users[user_id];
-  const templateVars = { urls: urlDatabase, user: user };
+  const templateVars = {urls: urlDatabase, user: user};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let user_id = req.cookies.user_id;
+  let user_id = req.session.user_id;
   const user = users[user_id];
-  const templateVars = { urls: urlDatabase, user: user};
+  const templateVars = {user: user};
+  if (!user_id) {
+    res.status(403).redirect("/login");
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -65,7 +78,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let user_id = req.cookies.user_id;
+  let user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user};
   res.render("urls_show", templateVars);
@@ -90,7 +103,7 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 });
 
 app.get("/login", (req,res) => {
-  let user_id = req.cookies.user_id;
+  let user_id = req.session.user_id;
   let user = users[user_id];
   
   let templateVars = {
@@ -137,17 +150,17 @@ app.post("/login", (req, res) => {
     return;
   }
 
-  res.cookie("user_id",foundUser.id);
+  req.session.user_id = foundUser.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req,res) => {
-  res.clearCookie("user_id");
+  delete req.session.user_id;
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   const user = users[user_id];
   
   let templateVars = {
@@ -194,7 +207,7 @@ app.post("/register", (req, res) => {
     urls:[]
   };
   
-  res.cookie("user_id", randId);
+  req.session.user_id = randId;
   res.redirect("/urls");
 });
 
