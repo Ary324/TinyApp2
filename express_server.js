@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const { response } = require("express");
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
@@ -88,7 +89,18 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 });
 
 app.get("/login", (req,res) => {
-  res.render("login");
+  let user_id = req.cookies.user_id;
+  let user = users[user_id];
+  
+  let templateVars = {
+    user: user
+  };
+  
+  if (user_id) {
+    res.redirect("/urls");
+  } else {
+    res.render("urls_login", templateVars);
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -101,17 +113,30 @@ app.post("/login", (req, res) => {
     return;
   }
   
-  for (const user_id in users) {
-    const user = users[user_id];
+  let foundUser;
+
+  for (let user_id in users) {
     
-    if (email !== user.email) {
-      res.status(400);
-      res.send("No User with that email is found");
-      return;
+    let user = users[user_id];
+    
+    if (email === user.email) {
+      foundUser = user;
     }
   }
-  
-  req.cookies["user_id"];
+
+  if (!foundUser) {
+    res.status(403);
+    res.send("No User with that email is found");
+    return;
+  }
+
+  if (password !== foundUser.password) {
+    res.status(403);
+    response.send("Incorrect Password");
+    return;
+  }
+
+  res.cookie("user_id",foundUser.id);
   res.redirect("/urls");
 });
 
@@ -121,7 +146,18 @@ app.post("/logout", (req,res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  let user_id = req.cookies["user_id"];
+  const user = users[user_id];
+  
+  let templateVars = {
+    user: user,
+  };
+
+  if (user_id) {
+    res.redirect("/urls");
+  } else {
+    res.render("urls_register",templateVars);
+  }
 });
 
 app.post("/register", (req, res) => {
