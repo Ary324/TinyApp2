@@ -1,10 +1,9 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-// const cookieParser = require('cookie-parser');
+// Original: const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const { response } = require("express");
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
@@ -14,6 +13,19 @@ app.use(cookieSession({
   resave: true,
   keys: ["supersecret"]
 }));
+
+const getUserByEmail = function(email, userFound, data) {
+  
+  for (const user_id in data) {
+    const user = data[user_id];
+    if (email === user.email) {
+      userFound = user;
+    }
+  }
+  
+  return userFound;
+};
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -50,11 +62,12 @@ const generateRandomString = () => {
 };
 
 app.get("/urls", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.user_id) { //error when not logged in
     res.status(403);
     res.send("Acces Denied, Login or Register");
     setTimeout(res.redirect("/login"), 2000);
   }
+
   let user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = {urls: urlDatabase, user: user};
@@ -91,10 +104,8 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req,res) => {
-  // const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   urlDatabase[req.params.shortURL] = req.body.updateURL;
   res.redirect("/urls");
-
 });
 
 app.post("/urls/:shortURL/delete", (req,res) => {
@@ -110,7 +121,7 @@ app.get("/login", (req,res) => {
     user: user
   };
   
-  if (user_id) {
+  if (user_id) {  //logged in condition
     res.redirect("/urls");
   } else {
     res.render("urls_login", templateVars);
@@ -127,17 +138,11 @@ app.post("/login", (req, res) => {
     return;
   }
   
+  //Looping through user database
   let foundUser;
+  foundUser = getUserByEmail(email, foundUser, users);
 
-  for (let user_id in users) {
-    
-    let user = users[user_id];
-    
-    if (email === user.email) {
-      foundUser = user;
-    }
-  }
-
+  //User Conditionss
   if (!foundUser) {
     res.status(403);
     res.send("No User with that email is found");
@@ -146,7 +151,7 @@ app.post("/login", (req, res) => {
 
   if (!(bcrypt.compareSync(password, foundUser.password))) {
     res.status(403);
-    response.send("Incorrect Password");
+    res.send("Incorrect Password");
     return;
   }
 
@@ -156,7 +161,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req,res) => {
   delete req.session.user_id;
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.get("/register", (req, res) => {
@@ -167,7 +172,7 @@ app.get("/register", (req, res) => {
     user: user,
   };
 
-  if (user_id) {
+  if (user_id) { //logged in condition
     res.redirect("/urls");
   } else {
     res.render("urls_register",templateVars);
@@ -185,19 +190,15 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  let foundUser;
-  for (const user_id in users) {
-    const user = users[user_id];
-    if (email === user.email) {
-      foundUser = user;
-    }
-  }
+  let foundUser; //setting found user to undefined as default
+  foundUser = getUserByEmail(email, foundUser, users);
 
-  if (foundUser) {
+  if (foundUser) {   //account existing condition
     res.status(400);
     res.send("Email already exists");
   }
 
+  // New User Creation
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   users[randId] = {
