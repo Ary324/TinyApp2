@@ -65,7 +65,6 @@ app.get("/urls", (req, res) => {
   if (!req.session.user_id) { //error when not logged in
     res.status(403);
     res.send("Acces Denied, Login or Register");
-    setTimeout(res.redirect("/login"), 2000);
   }
 
   let user_id = req.session.user_id;
@@ -213,7 +212,12 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  let user_id = req.session.user_id;
+  if (user_id) { //logged in condition
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
