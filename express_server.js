@@ -26,10 +26,19 @@ const getUserByEmail = function(email, userFound, data) {
   return userFound;
 };
 
+const userURLFilter = id => {
+  let userURLs = [];
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].user_id === id) {
+      userURLs.push(urlDatabase[url]);
+    }
+  }
+  return userURLs;
+};
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  // "b2xVn2": "http://www.lighthouselabs.ca",
+  // "9sm5xK": "http://www.google.com"
 };
 
 const users = {
@@ -64,12 +73,15 @@ const generateRandomString = () => {
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) { //error when not logged in
     res.status(403);
-    res.send("Acces Denied, Login or Register");
+    // res.send("Acces Denied, Login or Register");
+    res.redirect("/login");
   }
-
+  
   let user_id = req.session.user_id;
+  let userURLList = userURLFilter(user_id);
+  // console.log(userURLList);
   const user = users[user_id];
-  const templateVars = {urls: urlDatabase, user: user};
+  const templateVars = {urls: userURLList, user: user};
   res.render("urls_index", templateVars);
 });
 
@@ -85,11 +97,16 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = { longURL: req.body.longURL, shortURL, user_id: req.session.user_id };
+  // urlDatabase[req.session.user_id].shortURL = req.body.updateURL;
   res.redirect("/urls");
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (!req.session.user_id) { //error when not logged in
+    res.status(403);
+    res.redirect("/login");
+  }
   let user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user};
@@ -98,16 +115,24 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  let longURL = urlDatabase[shortURL];
+  let longURL = urlDatabase[shortURL].shortURL;
   res.redirect(longURL);
 });
 
 app.post("/urls/:shortURL", (req,res) => {
-  urlDatabase[req.params.shortURL] = req.body.updateURL;
+  if (!req.session.user_id) { //error when not logged in
+    res.status(403);
+    res.redirect("/login");
+  }
+  urlDatabase[req.params.shortURL].longURL = req.body.updateURL;
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/delete", (req,res) => {
+  if (!req.session.user_id) { //error when not logged in
+    res.status(403);
+    res.redirect("/login");
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
@@ -159,7 +184,8 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req,res) => {
-  delete req.session.user_id;
+  req.session = null;
+  // delete req.session.user_id;
   res.redirect("/login");
 });
 
