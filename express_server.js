@@ -109,9 +109,9 @@ app.get("/urls/:shortURL", (req, res) => {
   }
   const url = urlDatabase[req.params.shortURL];
 
-  if (!url) { //error when not logged in
+  if (!url) { //error when short url doesnt exist
     res.status(403);
-    res.send("Short URl doesnt exist");
+    res.send("Short URL doesnt exist");
   }
 
   if (url.user_id !== req.session.user_id) {
@@ -143,6 +143,13 @@ app.post("/urls/:shortURL/delete", (req,res) => {
     res.status(403);
     res.redirect("/login");
   }
+  const url = urlDatabase[req.params.shortURL];
+
+  if (!url) { //error if short url doesnt exist
+    res.status(403);
+    res.send("Short URL doesnt exist");
+  }
+
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
