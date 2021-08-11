@@ -107,6 +107,16 @@ app.get("/urls/:shortURL", (req, res) => {
     res.status(403);
     res.redirect("/login");
   }
+  const url = urlDatabase[req.params.shortURL];
+
+  if (!url) { //error when not logged in
+    res.status(403);
+    res.send("Short URl doesnt exist");
+  }
+
+  if (url.user_id !== req.session.user_id) {
+    res.status(403).redirect("/");
+  }
   let user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user};
@@ -115,7 +125,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  let longURL = urlDatabase[shortURL].shortURL;
+  let longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
