@@ -37,8 +37,6 @@ const userURLFilter = id => {
 };
 
 const urlDatabase = {
-  // "b2xVn2": "http://www.lighthouselabs.ca",
-  // "9sm5xK": "http://www.google.com"
 };
 
 const users = {
@@ -73,14 +71,18 @@ const generateRandomString = () => {
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) { //error when not logged in
     res.status(403);
-    // res.send("Acces Denied, Login or Register");
     res.redirect("/login");
   }
   
   let user_id = req.session.user_id;
   let userURLList = userURLFilter(user_id);
-  // console.log(userURLList);
   const user = users[user_id];
+  
+  if (!user) { //error when user is undefined after restarting server
+    req.session.user_id = null;
+    res.status(403);
+    res.redirect("/login");
+  }
   const templateVars = {urls: userURLList, user: user};
   res.render("urls_index", templateVars);
 });
@@ -98,7 +100,6 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = { longURL: req.body.longURL, shortURL, user_id: req.session.user_id };
-  // urlDatabase[req.session.user_id].shortURL = req.body.updateURL;
   res.redirect("/urls");
 });
 
@@ -114,8 +115,9 @@ app.get("/urls/:shortURL", (req, res) => {
     res.send("Short URL doesnt exist");
   }
 
-  if (url.user_id !== req.session.user_id) {
-    res.status(403).redirect("/");
+  if (url.user_id !== req.session.user_id) { // error when logged in user doesnt own url
+    res.status(403);
+    res.send("This account does not own this url");
   }
   let user_id = req.session.user_id;
   const user = users[user_id];
@@ -202,7 +204,6 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req,res) => {
   req.session = null;
-  // delete req.session.user_id;
   res.redirect("/login");
 });
 
